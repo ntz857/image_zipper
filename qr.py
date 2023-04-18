@@ -3,32 +3,50 @@ import cv2
 import numpy as np
 from PIL import Image
 
-def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.1, avg_white_threshold=220):
+import random
+
+def find_inner_square(contour, iterations=1000):
+    x, y, w, h = cv2.boundingRect(contour)
+
+    max_square_side = 0
+    max_square_x, max_square_y = 0, 0
+
+    for _ in range(iterations):
+        x1 = random.randint(x, x + w - 1)
+        y1 = random.randint(y, y + h - 1)
+
+        if cv2.pointPolygonTest(contour, (x1, y1), False) < 0:
+            continue
+
+        square_side = 0
+        while True:
+            square_side += 1
+            if (cv2.pointPolygonTest(contour, (x1 + square_side, y1), False) < 0 or
+                cv2.pointPolygonTest(contour, (x1, y1 + square_side), False) < 0 or
+                cv2.pointPolygonTest(contour, (x1 + square_side, y1 + square_side), False) < 0):
+                break
+
+        if square_side > max_square_side:
+            max_square_side = square_side
+            max_square_x, max_square_y = x1, y1
+
+    return max_square_x, max_square_y, max_square_side, max_square_side
+
+def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.2, avg_white_threshold=240):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY_INV)
-
-    kernel = np.ones((5, 5), np.uint8)
-    dilation = cv2.dilate(thresh, kernel, iterations=4)
-    st.image(dilation, caption="膨胀操作后的图像", use_column_width=True)
-
-    erosion = cv2.erode(dilation, kernel, iterations=4)
-    st.image(erosion, caption="腐蚀操作后的图像", use_column_width=True)
-
-    contours, _ = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    contour_img = img.copy()
-    cv2.drawContours(contour_img, contours, -1, (0, 255, 0), 2)
-    st.image(contour_img, caption="找到的轮廓", use_column_width=True)
+    _, thresh = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     max_area = 0
     max_rect = None
     for contour in contours:
-        hull = cv2.convexHull(contour)
-        area = cv2.contourArea(hull)
+        area = cv2.contourArea(contour)
         if area > min_area:
-            rect = cv2.boundingRect(hull)
+            rect = find_inner_square(contour)
             x, y, w, h = rect
             aspect_ratio = float(w) / h
             if (1 - aspect_ratio_tolerance) <= aspect_ratio <= (1 + aspect_ratio_tolerance):
+                # 检查轮廓区域内的内容是否主要为空白
                 roi = gray_img[y:y+h, x:x+w]
                 avg_value = np.mean(roi)
                 if avg_value > avg_white_threshold:
@@ -37,7 +55,6 @@ def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.
                         max_rect = rect
 
     return max_rect
-
 
 
 
