@@ -3,21 +3,32 @@ import cv2
 import numpy as np
 from PIL import Image
 
-def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.2, avg_white_threshold=240):
+def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.1, avg_white_threshold=220):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, thresh = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY_INV)
+
+    kernel = np.ones((5, 5), np.uint8)
+    dilation = cv2.dilate(thresh, kernel, iterations=4)
+    st.image(dilation, caption="膨胀操作后的图像", use_column_width=True)
+
+    erosion = cv2.erode(dilation, kernel, iterations=4)
+    st.image(erosion, caption="腐蚀操作后的图像", use_column_width=True)
+
+    contours, _ = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contour_img = img.copy()
+    cv2.drawContours(contour_img, contours, -1, (0, 255, 0), 2)
+    st.image(contour_img, caption="找到的轮廓", use_column_width=True)
 
     max_area = 0
     max_rect = None
     for contour in contours:
-        area = cv2.contourArea(contour)
+        hull = cv2.convexHull(contour)
+        area = cv2.contourArea(hull)
         if area > min_area:
-            rect = cv2.boundingRect(contour)
+            rect = cv2.boundingRect(hull)
             x, y, w, h = rect
             aspect_ratio = float(w) / h
             if (1 - aspect_ratio_tolerance) <= aspect_ratio <= (1 + aspect_ratio_tolerance):
-                # 检查轮廓区域内的内容是否主要为空白
                 roi = gray_img[y:y+h, x:x+w]
                 avg_value = np.mean(roi)
                 if avg_value > avg_white_threshold:
@@ -26,6 +37,10 @@ def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.
                         max_rect = rect
 
     return max_rect
+
+
+
+
 
 def overlay_images(bg_img, fg_img, x, y, w, h):
     # 保持前景图片的宽高比
