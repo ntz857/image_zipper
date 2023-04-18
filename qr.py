@@ -32,10 +32,21 @@ def find_inner_square(contour, iterations=1000):
 
     return max_square_x, max_square_y, max_square_side, max_square_side
 
-def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.2, avg_white_threshold=240):
+def find_blank_area(img, threshold=250, min_area=1000, aspect_ratio_tolerance=0.2, avg_white_threshold=250):
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, thresh = cv2.threshold(gray_img, threshold, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    kernel = np.ones((3, 3), np.uint8)
+    dilation = cv2.dilate(thresh, kernel, iterations=1)
+    # st.image(dilation, caption="膨胀操作后的图像", use_column_width=True)
+
+    erosion = cv2.erode(dilation, kernel, iterations=1)
+    # st.image(erosion, caption="腐蚀操作后的图像", use_column_width=True)
+
+    contours, _ = cv2.findContours(erosion, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contour_img = img.copy()
+    cv2.drawContours(contour_img, contours, -1, (0, 255, 0), 8)
+    # st.image(contour_img, caption="找到的轮廓", use_column_width=True)
 
     max_area = 0
     max_rect = None
