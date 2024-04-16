@@ -23,9 +23,9 @@ def create_collage(images, cols, rows, output_path, fill_method):
         
         # 调整图片尺寸以填满宫格
         if fill_method == "拉伸":
-            img = img.resize((width, height), Image.ANTIALIAS)
+            img = img.resize((width, height), Image.LANCZOS)
         elif fill_method == "裁切":
-            img = ImageOps.fit(img, (width, height), Image.ANTIALIAS)
+            img = ImageOps.fit(img, (width, height), Image.LANCZOS)
         
         # 将调整后的图片粘贴到拼接图片中
         collage.paste(img, (x_offset, y_offset))
