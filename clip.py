@@ -1,7 +1,5 @@
 import streamlit as st
 from PIL import Image, ImageOps
-import os
-import base64
 
 def create_collage(images, cols, rows, output_path, fill_method):
     """
