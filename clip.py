@@ -51,8 +51,10 @@ def main():
             cols, rows = 2, 2
         elif num_images <= 6:
             cols, rows = 3, 2
-        else:
+        elif num_images <= 9:
             cols, rows = 3, 3
+        else:
+            cols, rows = 3, 4
         
         images = []
         for uploaded_file in uploaded_files:
