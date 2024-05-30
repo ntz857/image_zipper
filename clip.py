@@ -1,4 +1,3 @@
-from turtle import heading
 import streamlit as st
 from PIL import Image, ImageOps
 
