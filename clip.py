@@ -42,34 +42,53 @@ def create_collage(images,ratio, cols, rows, output_path, fill_method):
     # 保存拼接后的图片
     collage.save(output_path)
 
+# 版本1
+# def calculate_layout(item_count,prefer='横向'):
+#     # 首先，获取item数量的平方根
+#     sqrt = math.sqrt(item_count)
+
+#     # 按照四舍五入的方法，获得最接近的整数来作为行数和列数
+#     approx = round(sqrt)
+
+#     # 检查这个布局是否提供足够的空间来存放所有的图片
+#     if approx * approx < item_count:
+#         rows = approx
+#         cols = approx
+#         if prefer == '横向':
+#             rows = approx + 1
+#         else:
+#             cols = approx + 1
+#     else:
+#         rows = approx
+#         cols = approx
+
+#     # 如果这个布局提供的空间过多，那么将减少一行来获取更适合的布局
+#     if prefer == 'horizontal':
+#         while (cols - 1) * rows >= item_count:
+#             cols = cols - 1
+#     else:
+#         while (rows - 1) * cols >= item_count:
+#             rows = rows - 1
+
+#     return cols, rows
+
+# 版本2 
 def calculate_layout(item_count,prefer='横向'):
-    # 首先，获取item数量的平方根
-    sqrt = math.sqrt(item_count)
 
-    # 按照四舍五入的方法，获得最接近的整数来作为行数和列数
-    approx = round(sqrt)
+    # 获取因数
+    factors = [i for i in range(2, item_count + 1) if item_count % i == 0]
 
-    # 检查这个布局是否提供足够的空间来存放所有的图片
-    if approx * approx < item_count:
-        rows = approx
-        cols = approx
-        if prefer == '横向':
-            rows = approx + 1
-        else:
-            cols = approx + 1
-    else:
-        rows = approx
-        cols = approx
+    # 找到最接近平方根的因数对
+    sqrt = math.sqrt(item_count) 
+    rows, cols = min((abs(sqrt - factor), factor, item_count // factor) for factor in factors)[1:]
 
-    # 如果这个布局提供的空间过多，那么将减少一行来获取更适合的布局
-    if prefer == 'horizontal':
-        while (cols - 1) * rows >= item_count:
-            cols = cols - 1
-    else:
-        while (rows - 1) * cols >= item_count:
-            rows = rows - 1
+    if (prefer == "横向" and rows > cols) or (prefer == "纵向" and cols > rows):
+        rows, cols = cols, rows
 
     return cols, rows
+
+ 
+
 
 def main():
     st.title("图片拼接")
@@ -85,7 +104,7 @@ def main():
     fill_method = st.radio("选择填充方式", ("裁切", "拉伸"))
 
     # 选择布局方式
-    prefer_layout = st.radio("选择布局方式", ("横向", "纵向"))
+    prefer_layout = st.radio("选择布局方式", ("纵向", "横向"))
 
     if uploaded_files:
         num_images = len(uploaded_files)
