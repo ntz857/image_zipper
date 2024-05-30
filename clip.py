@@ -74,7 +74,8 @@ def create_collage(images,ratio, cols, rows, output_path, fill_method):
 
 # 版本2 
 def calculate_layout(item_count,prefer='横向'):
-
+    if item_count == 1:
+        return 1, 1
     # 获取因数
     factors = [i for i in range(2, item_count + 1) if item_count % i == 0]
 
