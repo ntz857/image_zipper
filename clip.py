@@ -1,12 +1,18 @@
 import streamlit as st
+import math
 from PIL import Image, ImageOps
 
-def create_collage(images, cols, rows, output_path, fill_method):
+def create_collage(images,ratio, cols, rows, output_path, fill_method):
     """
     拼接图片成为 cols * rows 的网格
     """
     total_width = 1200
-    total_height = 1600
+    #根据ratio计算出每张图片的高度，("3:4", "1:1", "4:3", "16:9", "9:16")
+    w, h = ratio.split(':')
+    
+    # 计算高度
+    total_height = total_width * int(h) // int(w)
+
     # 获取第一张图片的尺寸
     width = total_width // cols
     height = total_height // rows
@@ -36,38 +42,75 @@ def create_collage(images, cols, rows, output_path, fill_method):
     # 保存拼接后的图片
     collage.save(output_path)
 
+def calculate_layout(item_count,prefer='横向'):
+    # 首先，获取item数量的平方根
+    sqrt = math.sqrt(item_count)
+
+    # 按照四舍五入的方法，获得最接近的整数来作为行数和列数
+    approx = round(sqrt)
+
+    # 检查这个布局是否提供足够的空间来存放所有的图片
+    if approx * approx < item_count:
+        rows = approx
+        cols = approx
+        if prefer == '横向':
+            rows = approx + 1
+        else:
+            cols = approx + 1
+    else:
+        rows = approx
+        cols = approx
+
+    # 如果这个布局提供的空间过多，那么将减少一行来获取更适合的布局
+    if prefer == 'horizontal':
+        while (cols - 1) * rows >= item_count:
+            cols = cols - 1
+    else:
+        while (rows - 1) * cols >= item_count:
+            rows = rows - 1
+
+    return cols, rows
+
 def main():
     st.title("图片拼接")
-    st.write("上传3:4比例的图片，选择拼接方式，并生成对应的宫格图片")
-    
+    st.write("上传图片，选择拼接方式，并生成对应的宫格图片，生成比例")
+
     # 上传图片
     uploaded_files = st.file_uploader("上传图片", accept_multiple_files=True, type=["jpg", "png", "jpeg"])
-    
+
+    # 选择生成图片比例
+    ratio = st.radio("选择生成图片比例", ("3:4", "1:1", "4:3", "16:9", "9:16"))
+
     # 选择填充方式
     fill_method = st.radio("选择填充方式", ("裁切", "拉伸"))
-    
+
+    # 选择布局方式
+    prefer_layout = st.radio("选择布局方式", ("横向", "纵向"))
+
     if uploaded_files:
         num_images = len(uploaded_files)
-        
+
         # 根据图片数量选择拼接模式和行列数
-        if num_images <= 4:
-            cols, rows = 2, 2
-        elif num_images <= 6:
-            cols, rows = 2, 3 
-        elif num_images <= 9:
-            cols, rows = 3, 3
-        else:
-            cols, rows = 3, 4
-        
+        # if num_images <= 4:
+        #     cols, rows = 2, 2
+        # elif num_images <= 6:
+        #     cols, rows = 2, 3
+        # elif num_images <= 9:
+        #     cols, rows = 3, 3
+
+        # else:
+        #     cols, rows = 3, 4
+        cols, rows = calculate_layout(num_images,prefer_layout)
+
         images = []
         for uploaded_file in uploaded_files:
             image = Image.open(uploaded_file)
             images.append(image)
-        
+
         # 生成拼接后的图片
         collage_output = "collage.jpg"
-        create_collage(images, cols, rows, collage_output, fill_method)
-        
+        create_collage(images,ratio, cols, rows, collage_output, fill_method)
+
         # 显示拼接后的图片
         st.image(collage_output, caption='拼接后的图片', use_column_width=True)
         st.text("长按图片下载")
