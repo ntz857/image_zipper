@@ -1,3 +1,4 @@
+from turtle import heading
 import streamlit as st
 from PIL import Image, ImageOps
 
@@ -5,8 +6,11 @@ def create_collage(images, cols, rows, output_path, fill_method):
     """
     拼接图片成为 cols * rows 的网格
     """
+    total_width = 1200
+    total_height = 1600
     # 获取第一张图片的尺寸
-    width, height = images[0].size
+    width = total_width // cols
+    height = total_height // rows
     
     # 计算拼接后的图片尺寸
     collage_width = width * cols
@@ -50,7 +54,7 @@ def main():
         if num_images <= 4:
             cols, rows = 2, 2
         elif num_images <= 6:
-            cols, rows = 3, 2
+            cols, rows = 2, 3 
         elif num_images <= 9:
             cols, rows = 3, 3
         else:
