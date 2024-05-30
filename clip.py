@@ -44,7 +44,7 @@ def main():
     uploaded_files = st.file_uploader("上传图片", accept_multiple_files=True, type=["jpg", "png", "jpeg"])
     
     # 选择填充方式
-    fill_method = st.radio("选择填充方式", ("拉伸", "裁切"))
+    fill_method = st.radio("选择填充方式", ("裁切", "拉伸"))
     
     if uploaded_files:
         num_images = len(uploaded_files)
