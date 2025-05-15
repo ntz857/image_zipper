@@ -5,4 +5,3 @@ opencv-python-headless==4.7.0.72
 openai
 pandas
 PyPDF2
-distutils
